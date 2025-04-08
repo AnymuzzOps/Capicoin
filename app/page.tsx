@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { IDKitWidget, VerificationLevel, ISuccessResult } from "@worldcoin/idkit";
 
 export default function Home() {
   const [timeLeft, setTimeLeft] = useState(24 * 60 * 60 - 1); // 23:59:59 en segundos
@@ -23,18 +24,20 @@ export default function Home() {
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleVerify = async () => {
+  const onSuccess = () => {
+    setIsVerified(true);
+  };
+
+  const handleVerify = async (proof: ISuccessResult): Promise<void> => {
     try {
-      // Inicia el proceso de verificación mediante el comando
-      const response = await fetch("https://api.worldcoin.org/v1/verify", {
+      console.log("Proof recibido:", proof);
+      // Enviar el proof al backend para verificarlo con la API de Worldcoin
+      const response = await fetch("/api/verifyWorldcoin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          // Aquí debes incluir los parámetros según la API de Worldcoin
-          // Ejemplo: código de usuario, id, etc.
-        }),
+        body: JSON.stringify({ proof, apiKey: "crypto-key" }), // Asegúrate de enviar la API Key
       });
 
       const result = await response.json();
@@ -44,21 +47,30 @@ export default function Home() {
         alert("Verificación fallida");
       }
     } catch (error) {
-      console.error("Error al verificar:", error);
+      console.error("Error al verificar el proof:", error);
+      alert("Error en la verificación");
     }
   };
 
   return (
     <main className="container">
-      <h1>Capicoin</h1>
+      <h1>Capicoin 1</h1>
       <p>Relájate como una capibara</p>
 
       {!isVerified && (
         <div className="card">
           <h3>Verificación con World ID</h3>
-          <button onClick={handleVerify}>
-            Verificar con World ID
-          </button>
+          <IDKitWidget
+            app_id="app_f11784605b81085628aa16e4687a008b"
+            action="verified-with-world-id" // Acción anónima
+            onSuccess={onSuccess}
+            handleVerify={handleVerify}
+            verification_level={VerificationLevel.Orb}
+          >
+            {({ open }) => (
+              <button onClick={open}>Verificar con World ID</button>
+            )}
+          </IDKitWidget>
         </div>
       )}
 
