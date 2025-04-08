@@ -1,36 +1,39 @@
-"use client"; // Asegúrate de que el código se ejecute del lado del cliente
+"use client"; // Asegúrate de que este código se ejecute en el cliente
 
-import { useState } from 'react';  // Para el manejo de estados
-import * as MiniKit from '@worldcoin/minikit-js'; // Importa todo el SDK de Worldcoin
+import { useState } from 'react';
+import { MiniKit } from '@worldcoin/minikit-js';
 
-// Asegúrate de que estás exportando un componente React
 export default function LobbyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-  // Inicializa el SDK con tu clave API
-  const worldcoin = new MiniKit.MiniKit({
-    apiKey: 'Crypto-key',  // Reemplaza con tu clave API real
-  });
-
-  const handleBuySubscription = async () => {
+  const connectWallet = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await worldcoin.purchaseSubscription({
-        amount: 1.00, // 1 WLD para la compra
-        duration: 30, // Duración de la suscripción (30 días)
-        actionId: 'capicoin', // Action_ID de Worldcoin
+      const res = await fetch('/api/nonce'); // Obtener el nonce del backend
+      const { nonce } = await res.json();
+
+      // Realizar la autenticación de la billetera con el nonce
+      const { commandPayload, finalPayload } = await MiniKit.commandsAsync.walletAuth({
+        nonce,
+        requestId: '0', // Opcional
+        expirationTime: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
+        notBefore: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+        statement: 'Esta es mi declaración. Aquí está el enlace https://worldcoin.com/apps',
       });
 
-      if (response.success) {
-        alert('¡Suscripción adquirida con éxito!');
+      // Verificar si la autenticación fue exitosa
+      if (finalPayload.status === 'success') {
+        setWalletAddress(finalPayload.address);
+        alert('Billetera conectada correctamente');
       } else {
-        throw new Error(response.message || 'Hubo un error al realizar la compra.');
+        throw new Error('Error al autenticar la billetera');
       }
     } catch (err) {
-      setError('Error al procesar la compra. Intenta nuevamente.');
+      setError('Error al conectar la billetera.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -38,53 +41,16 @@ export default function LobbyPage() {
   };
 
   return (
-    <main className="max-w-md mx-auto p-6 bg-white border rounded-lg shadow-lg text-[#5C1E3E]">
-      {/* Título */}
-      <section className="mb-6">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <span role="img" aria-label="medal">🏅</span> Membresía Premium
-        </h2>
-        <p className="text-sm text-gray-600">
-          Mejora tu experiencia en AXOLOCOIN con beneficios exclusivos
-        </p>
-        <div className="mt-2 text-lg font-semibold">
-          Precio: <span className="text-black">1.00 WLD</span>
-        </div>
-      </section>
-
-      {/* Beneficios */}
-      <section className="mb-6 border rounded-lg p-4 bg-[#FFF0F5]">
-        <h3 className="font-semibold mb-2">Beneficios:</h3>
-        <ul className="list-disc list-inside space-y-1 text-sm">
-          <li>✅ 3x recompensas diarias de tokens</li>
-          <li>✅ Nuevos tokens exclusivos</li>
-          <li>✅ 30 días de estado premium</li>
-          <li>✅ Insignia exclusiva de premium</li>
-        </ul>
-      </section>
-
-      {/* Estado Premium */}
-      <section className="border rounded-lg p-4 bg-[#FFF0F5]">
-        <h3 className="font-semibold mb-2">Estado Premium</h3>
-        <p className="text-sm mb-4">
-          ¡Suscríbete a premium para obtener 3 veces más recompensas diarias y beneficios exclusivos!
-        </p>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button
-          onClick={handleBuySubscription}
-          disabled={loading}
-          className="w-full bg-pink-500 text-white py-2 rounded-md hover:bg-pink-600 transition"
-        >
-          {loading ? 'Procesando...' : 'Suscribirse por 1.00 WLD'}
+    <main>
+      <h1>Conectar billetera</h1>
+      {walletAddress ? (
+        <p>Billetera conectada: {walletAddress}</p>
+      ) : (
+        <button onClick={connectWallet} disabled={loading}>
+          {loading ? 'Conectando billetera...' : 'Conectar Billetera'}
         </button>
-      </section>
-
-      {/* Action_ID */}
-      <section className="mt-6 text-center">
-        <p className="text-sm text-gray-500">
-          Action_ID de Worldcoin: <strong>capicoin</strong>
-        </p>
-      </section>
+      )}
+      {error && <p>{error}</p>}
     </main>
   );
 }
