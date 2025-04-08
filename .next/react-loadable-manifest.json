@@ -1,16 +1,16 @@
 {
   "node_modules\\viem\\_esm\\actions\\public\\call.js -> ../../utils/ccip.js": {
-    "id": 4844,
+    "id": "node_modules\\viem\\_esm\\actions\\public\\call.js -> ../../utils/ccip.js",
     "files": [
-      "static/chunks/735.4c2b6d47e0848a19.js"
+      "static/chunks/_app-pages-browser_node_modules_viem__esm_utils_ccip_js.js"
     ]
   },
   "node_modules\\viem\\_esm\\utils\\rpc\\webSocket.js -> isows": {
-    "id": null,
+    "id": "node_modules\\viem\\_esm\\utils\\rpc\\webSocket.js -> isows",
     "files": []
   },
   "node_modules\\viem\\_esm\\utils\\signature\\recoverPublicKey.js -> @noble/curves/secp256k1": {
-    "id": 4101,
+    "id": "node_modules\\viem\\_esm\\utils\\signature\\recoverPublicKey.js -> @noble/curves/secp256k1",
     "files": []
   }
 }

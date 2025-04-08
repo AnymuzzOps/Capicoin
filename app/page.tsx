@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { IDKitWidget, VerificationLevel, ISuccessResult } from "@worldcoin/idkit";
 
 export default function Home() {
   const [timeLeft, setTimeLeft] = useState(24 * 60 * 60 - 1); // 23:59:59 en segundos
@@ -24,30 +23,28 @@ export default function Home() {
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const onSuccess = () => {
-    setIsVerified(true);
-  };
-
-  const handleVerify = async (proof: ISuccessResult): Promise<void> => {
+  const handleVerify = async () => {
     try {
-      console.log("Proof recibido:", proof);
-      // Enviar el proof al backend para verificarlo
-      const response = await fetch("/api/verify", {
+      // Inicia el proceso de verificación mediante el comando
+      const response = await fetch("https://api.worldcoin.org/v1/verify", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(proof),
+        body: JSON.stringify({
+          // Aquí debes incluir los parámetros según la API de Worldcoin
+          // Ejemplo: código de usuario, id, etc.
+        }),
       });
 
       const result = await response.json();
-      if (!result.success) {
-        throw new Error("Verificación fallida");
+      if (result.success) {
+        setIsVerified(true);
+      } else {
+        alert("Verificación fallida");
       }
-      // No retornamos nada (void), ya que onSuccess se encargará de actualizar el estado
     } catch (error) {
-      console.error("Error al verificar el proof:", error);
-      throw error; // Lanzamos el error para que IDKitWidget lo maneje
+      console.error("Error al verificar:", error);
     }
   };
 
@@ -56,61 +53,36 @@ export default function Home() {
       <h1>Capicoin</h1>
       <p>Relájate como una capibara</p>
 
-      <div className="card">
-        <h2>Balance</h2>
-        <p>
-          <strong>1.00 $CAPI</strong>
-        </p>
-        <p>Próximo reclamo disponible en:</p>
-        <div id="timer">{formatTime(timeLeft)}</div>
-        <button
-          onClick={() => {
-            if (!isVerified) {
-              alert("¡Por favor, verifica tu identidad con World ID primero!");
-            } else {
-              alert("¡Tokens reclamados exitosamente!");
-            }
-          }}
-          disabled={timeLeft > 0 || !isVerified}
-          style={{ opacity: timeLeft > 0 || !isVerified ? 0.5 : 1 }}
-        >
-          Reclamar Tokens
-        </button>
-      </div>
+      {!isVerified && (
+        <div className="card">
+          <h3>Verificación con World ID</h3>
+          <button onClick={handleVerify}>
+            Verificar con World ID
+          </button>
+        </div>
+      )}
 
-      <div className="card" id="world-id-container">
-        <h3>Verificación con World ID</h3>
-        {isVerified ? (
-          <p>✅ Identidad verificada exitosamente</p>
-        ) : (
-          <IDKitWidget
-            app_id="app_f11784605b81085628aa16e4687a008b"
-            action="verified-with-world-id"
-            onSuccess={onSuccess}
-            handleVerify={handleVerify}
-            verification_level={VerificationLevel.Orb}
-          >
-            {({ open }) => (
-              <button onClick={open}>Verificar con World ID</button>
-            )}
-          </IDKitWidget>
-        )}
-      </div>
-
-      <div className="card">
-        <h3>Tabla de Clasificación</h3>
-        <ol>
-          <li>
-            <strong>capiking</strong> — 1,500,000.00 $CAPI
-          </li>
-          <li>
-            <strong>capilover</strong> — 1,250,000.00 $CAPI
-          </li>
-          <li>
-            <strong>relaxcapi</strong> — 1,000,000.00 $CAPI
-          </li>
-        </ol>
-      </div>
+      {isVerified && (
+        <>
+          <div className="card">
+            <h2>Balance</h2>
+            <p>
+              <strong>1.00 $CAPI</strong>
+            </p>
+            <p>Próximo reclamo disponible en:</p>
+            <div id="timer">{formatTime(timeLeft)}</div>
+            <button
+              onClick={() => {
+                alert("¡Tokens reclamados exitosamente!");
+              }}
+              disabled={timeLeft > 0}
+              style={{ opacity: timeLeft > 0 ? 0.5 : 1 }}
+            >
+              Reclamar Tokens
+            </button>
+          </div>
+        </>
+      )}
     </main>
   );
 }
